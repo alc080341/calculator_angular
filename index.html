@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="css/bootstrap.css" type="text/css"/>
+	<link rel="stylesheet" href="css/stylesheet.css" type="text/css"/>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.js"></script>
+	<link rel="stylesheet" href="stylesheet.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Simple calculator written in angular.</title>
+</head>
+<body ng-app="simpleCalculator">
+
+	<div class="calculator" ng-controller="simpleCalculatorController">
+		<div class="screen_display">
+			<div class="screen_display_running_total">
+				{{total}}
+			</div>
+			<div class="screen_display_symbol">
+				{{currentSymbol}}
+			</div>
+			<div class="screen_display_current_number">
+				{{display}}
+			</div>
+		</div>
+		<div class="buttons_display">
+			<div ng-repeat="number in numbersPanel">
+				<div ng-click="displayNumber(number)">
+					{{number}}
+				</div>
+			</div>
+		</div>
+		<div class="buttons_display">
+			<div ng-repeat="symbol in symbolsPanel">
+				<div ng-click="addSymbolAndVal(symbol)">
+					{{symbol}}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<div>
+</div>
+</div>
+
+<script>
+	var app = angular.module('simpleCalculator',[]);
+	app.controller('simpleCalculatorController', function($scope) {
+
+		$scope.numbersPanel = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, "."];
+		$scope.symbolsPanel = ['*',  '/',  '+',  '-', '='];
+		$scope.display = "0";
+		$scope.total = 0;
+		$scope.clearDisplay = false;
+		$scope.numberEntered = false;
+		$scope.currentSymbol = "";
+		$scope.justTotalled = false;
+
+		//Every time a user clicks a number, this function is called...
+		$scope.displayNumber = function(thisNumber)
+		{
+			if ($scope.clearDisplay === true)
+			{
+				$scope.display = "";
+				$scope.clearDisplay = false;
+			}
+			$scope.display === "0" ? $scope.display = "" : "";	
+			if(thisNumber !== ".")
+			{	
+				$scope.display += thisNumber + "";
+			}
+			else
+			{
+				if($scope.display.indexOf(".") === -1)
+				{
+					if($scope.display === "")
+					{
+						$scope.display += "0" + thisNumber + "";
+					}
+					else
+					{
+						$scope.display += thisNumber + "";
+					}
+				}
+			}
+			$scope.numberEntered = true;
+		}	
+
+
+
+
+
+		//Every time the user clicks on a symbol, this function is called.
+		$scope.addSymbolAndVal = function(thisSymbol)
+		{
+			// Holds the value of the current display
+			let currentDisplay;
+
+			// If the user presses equals then attempts to carry out futher math with the displayed total, this statement resets the display and ensures another maths symbol can be added.
+			if($scope.justTotalled === true)
+			{
+				$scope.numberEntered = true;
+				$scope.justTotalled = false;
+				$scope.display = "0";
+				$scope.currentSymbol = thisSymbol;
+				return;
+			}
+
+			// If the value of display contains a decimal place, use the parseFloat method. Otherwise, use parseInt...
+			if ($scope.display.indexOf(".") !== -1)
+			{
+				currentDisplay = parseFloat($scope.display);
+			}	
+			else
+			{
+				currentDisplay = parseInt($scope.display);
+			}
+
+			// If the user clicks on a symbol without entering a number, then return
+
+			// This stops the user from entering more than one symbol, which would cause an error. If a number was not entered prior to clicking a symbol, the return...
+
+			if(currentDisplay === 0 || $scope.numberEntered === false)
+			{
+				return;
+			}
+	
+			// If this is the first time a user has clicked on a symbol, then currentSymbol will be assigned its value. 
+			if($scope.currentSymbol === "")
+			{
+				$scope.currentSymbol = thisSymbol;
+			}
+
+	
+
+			if(thisSymbol === "=")
+			{
+				$scope.sumUp(thisSymbol, currentDisplay);
+			}
+			else if($scope.currentSymbol !== thisSymbol)
+			{
+				$scope.sumUp($scope.currentSymbol, currentDisplay);
+				$scope.currentSymbol = thisSymbol;
+			}
+			else
+			{
+				$scope.sumUp(thisSymbol, currentDisplay);
+			}
+
+	
+
+			// This ensures that the user cannot click on another symbol until another numeric value has been entered. Thus, ensuring that multiple symbols are not entered between values, which would lead to errors.
+			$scope.numberEntered = false;
+
+			// This ensures that the next time the user enters a number after clicking a symbol, the value of which will be passed to above function displayNumber, that the display will be cleared.
+			$scope.clearDisplay = true;
+		}
+
+
+		$scope.sumUp = function(thisSymbol, currentDisplay)
+		{
+			if(thisSymbol === "*")
+			{
+			
+				// If the total is zero, then the total must be changed to 1 otherwise the total will forever be zero as zero multiplied by anything is always zero...
+				if($scope.total === 0)
+				{
+					$scope.total = 1;
+				}
+				$scope.total = $scope.total * currentDisplay;
+			}
+
+			else if(thisSymbol === "/")
+			{
+				// If the total is zero, then set the total to the display and wait for the next entry because any number divided by zero is undefined...
+				if($scope.total === 0)
+				{
+					$scope.total = currentDisplay;
+				}
+				else
+				{
+					$scope.total = $scope.total / currentDisplay;
+				}
+			}
+
+			else if(thisSymbol === "+")
+			{
+				$scope.total = $scope.total + currentDisplay;
+			}
+
+			else if(thisSymbol === "-")
+			{
+				if ($scope.total === 0)
+				{
+					// If the total is zero, add the current display to the total but do not do anything else. This is because if we take the currentDisplay from zero it will become a negative number!
+					$scope.total = currentDisplay;
+				}
+				else
+				{
+					$scope.total = $scope.total - currentDisplay;
+				}
+			}	
+			
+
+
+			// The following is concerned with the equals symbol
+			if(thisSymbol === "=")
+			{
+			
+				let currentSymbol = $scope.currentSymbol;
+				$scope.currentSymbol = "";
+				$scope.justTotalled = true;
+				$scope.sumUp(currentSymbol, currentDisplay);
+			}
+			else
+			{
+				if($scope.justTotalled === false)
+				{
+					$scope.currentSymbol = thisSymbol;
+					$scope.display = "";
+				}
+				else if($scope.justTotalled === true)
+				{
+					$scope.display = "";
+					$scope.currentSymbol = "";
+					$scope.numberEntered = false;
+				}
+			}
+		}
+
+
+	});
+
+
+</script>
+</body>
+</html>
